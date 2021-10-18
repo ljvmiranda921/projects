@@ -1,6 +1,8 @@
 import nlpaug.augmenter.char as nac
 import nlpaug.augmenter.word as naw
 import spacy
+from spacy.util import get_words_and_spaces
+from spacy.tokens import Doc
 from wasabi import msg
 
 
@@ -30,9 +32,11 @@ def create_augmenter(
 
         example_dict = example.to_dict()
         doc = nlp.make_doc(text)
-        example_dict["token_annotation"]["ORTH"] = [t.text for t in doc]
-        # FIXME
-        msg.text(example_dict)
+        # words, spaces = get_words_and_spaces(text.split(), text)
+        # doc = Doc(nlp.vocab, words=words, spaces=spaces)
+        # example_dict["token_annotation"]["ORTH"] = [t.text for t in doc]
+        # example_dict["token_annotation"]["SPACY"] = None
+        print(example_dict)
 
         yield example
         yield example.from_dict(doc, example_dict)
