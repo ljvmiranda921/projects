@@ -7,6 +7,7 @@ description: |
 vars:
   config: "config.cfg"
   config_spacy_augmenter: "config_with_augmenter.cfg"
+  config_custom_augmenter: "config_with_custom.cfg"
   name: "ner_tweets"
   version: "0.0.0"
 
@@ -124,20 +125,28 @@ commands:
     outputs:
       - "training/spacy-augmenter/model-best"
 
+  - name: "train-with-custom-aug"
+    help: "Train a named entity recognition model using a custom augmenter"
+    script:
+      - "python -m spacy train configs/${vars.config_custom_augmenter} --initialize.vectors en_core_web_lg --output training/custom-augmenter/ --paths.train corpus/train_aug.spacy --paths.dev corpus/eval_aug.spacy --code scripts/custom_augmenter.py"
+
   - name: "evaluate"
     help: "Evaluate various experiments and export the computed metrics"
     script: 
       - "python -m spacy evaluate en_core_web_lg corpus/test.spacy --output metrics/baseline.json"
       - "python -m spacy evaluate training/default/model-best corpus/test.spacy --output metrics/model_aug.json"
       - "python -m spacy evaluate training/spacy-augmenter/model-best corpus/test.spacy --output metrics/model_aug_spacy.json"
+      - "python -m spacy evaluate training/custom-augmenter/model-best corpus/test.spacy --output metrics/model_aug_custom.json"
     deps:
       - "corpus/test.spacy"
       - "training/default/model-best"
       - "training/spacy-augmenter/model-best"
+      - "training/custom-augmenter/model-best"
     outputs:
       - "metrics/baseline.json"
       - "metrics/model_aug.json"
       - "metrics/model_aug_spacy.json"
+      - "metrics/model_aug_custom.json"
 
   - name: "package"
     help: "Package the trained model so it can be installed"
