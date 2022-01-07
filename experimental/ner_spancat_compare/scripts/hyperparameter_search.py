@@ -29,19 +29,13 @@ SWEEP_CONFIG_NER = {
 
 
 SWEEP_CONFIG_SPANCAT = {
-    "method": "random",
+    "method": "grid",
     "metric": {
         "name": "spans_sc_f",  # https://spacy.io/api/scorer#score
         "goal": "maximize",
     },
     "parameters": {
-        "components.spancat.suggester.max_size": {"values": [5, 6, 7]},
-        "components.spancat.model.reducer.hidden_size": {"values": [96, 128, 256, 512]},
-        "training.dropout": {
-            "distribution": "uniform",
-            "max": 0.5,
-            "min": 0.05,
-        },
+        "components.spancat.suggester.max_size": {"values": [7, 96, 128, 140, 200]},
     },
 }
 
