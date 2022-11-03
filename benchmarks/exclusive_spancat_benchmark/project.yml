@@ -1,0 +1,91 @@
+title: "Exclusive Spancat Benchmark"
+description: |
+  This project aims to compare the `spancat`, `ner`, and `exclusive_spancat` components
+  on different span labeling datasets.
+
+vars:
+  gpu_id: 0
+
+directories:
+  - "assets"
+  - "configs"
+  - "corpus/spancat"
+  - "corpus/ner"
+  - "scripts"
+
+workflows:
+  all:
+    - "process-datasets"
+    - "train-spancat"
+    - "evaluate-spancat"
+    - "train-exclusive-spancat"
+    - "evaluate-exclusive-spancat"
+    - "train-ner"
+    - "evaluate-ner"
+  spancat:
+    - "process-datasets"
+    - "train-spancat"
+    - "evaluate-spancat"
+  exclusive-spancat:
+    - "process-datasets"
+    - "train-exclusive-spancat"
+    - "evaluate-exclusive-spancat"
+  ner:
+    - "process-datasets"
+    - "train-ner"
+    - "evaluate-ner"
+
+assets:
+  # WNUT17 https://aclanthology.org/W17-4418/
+  - dest: "assets/wnut17-train.iob"
+    url: "https://github.com/leondz/emerging_entities_17/blob/master/wnut17train.conll"
+  - dest: "assets/wnut17-test.iob"
+    url: "https://github.com/leondz/emerging_entities_17/blob/master/emerging.test.annotated"
+  - dest: "assets/wnut17-dev.iob"
+    url: "https://github.com/leondz/emerging_entities_17/blob/master/emerging.dev.conll"
+  ### CoNLL-2002 (es, nl) https://aclanthology.org/W02-2024/ ###
+  - dest: "assets/conll.tgz"
+    description: "ConLL 2002 shared task data."
+    url: http://www.cnts.ua.ac.be/conll2002/ner.tgz
+  ### Archaeo dataset https://aclanthology.org/2020.lrec-1.562/ ###
+  - dest: "assets/archaeo.iob"
+    description: "Dutch Archaeological NER dataset by Alex Brandsen (LREC 2020)"
+    url: https://github.com/alexbrandsen/dutch-archaeo-NER-dataset/blob/master/complete-bio-gs.bio
+
+commands:
+  - name: "process-datasets"
+    help: "Process all necessary datasets and convert them to spaCy Doc objects."
+    script:
+      - bash scripts/unpack_conll.sh
+      - bash scripts/process_datasets.sh
+    deps:
+      - assets/conll.tgz
+      - assets/wnut17-train.iob
+      - assets/wnut17-dev.iob
+      - assets/wnut17-test.iob
+      - assets/archaeo.iob
+    outputs:
+      - corpus/ner/wnut17-train.spacy
+      - corpus/ner/wnut17-dev.spacy
+      - corpus/ner/wnut17-test.spacy
+      - corpus/spancat/wnut17-train.spacy
+      - corpus/spancat/wnut17-dev.spacy
+      - corpus/spancat/wnut17-test.spacy
+      - "corpus/ner/es-conll-train.spacy"
+      - "corpus/ner/es-conll-dev.spacy"
+      - "corpus/ner/es-conll-test.spacy"
+      - "corpus/ner/nl-conll-train.spacy"
+      - "corpus/ner/nl-conll-dev.spacy"
+      - "corpus/ner/nl-conll-test.spacy"
+      - "corpus/spancat/es-conll-train.spacy"
+      - "corpus/spancat/es-conll-dev.spacy"
+      - "corpus/spancat/es-conll-test.spacy"
+      - "corpus/spancat/nl-conll-train.spacy"
+      - "corpus/spancat/nl-conll-dev.spacy"
+      - "corpus/spancat/nl-conll-test.spacy"
+      - "corpus/ner/archaeo-train.spacy"
+      - "corpus/ner/archaeo-dev.spacy"
+      - "corpus/ner/archaeo-test.spacy"
+      - "corpus/spancat/archaeo-train.spacy"
+      - "corpus/spancat/archaeo-dev.spacy"
+      - "corpus/spancat/archaeo-test.spacy"
