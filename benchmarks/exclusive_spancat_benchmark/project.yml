@@ -1,91 +1,95 @@
 title: "Exclusive Spancat Benchmark"
 description: |
-  This project aims to compare the `spancat`, `ner`, and `exclusive_spancat` components
-  on different span labeling datasets.
+  This project aims to compare the `spancat`, `ner`, and `exclusive_spancat`
+  components on different span labeling datasets. In order to access the datasets,
+  you first need to clone the [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
+  repository:
+
+  ```sh
+  # Clone the spancat-datasets repo to access the datasets
+  git clone git@github.com:explosion/spancat-datasets.git
+  ```
+
+  and run the necessary conversion scripts. For example, let's perform the
+  conversion command for the [Anatomical Entity Mention (AnEM)](http://www.nactem.ac.uk/anatomy/)
+  corpus:
+
+  ```sh
+  # While inside the spancat-datasets repository
+  spacy project run anem
+  ```
+
+  This will generate the spaCy files that you can use for training. Once done,
+  you **should copy these files to this project**. For example, you can perform
+  a directory copy in Linux via:
+
+  ```sh
+  cp -r spancat-datasets/corpus/spancat/*. exclusive_spancat_benchmark/corpus/. 
+  ```
+
+  You can now supply the local path to the commands and workflows to
+  perform experiments in **this project:**
+
+  ```sh
+  # Perform experiments in the ner_embeddings project
+  spacy project run train . --vars.dataset anem
 
 vars:
+  dataset: anem
   gpu_id: 0
+  seed: 42
+  batch_size: 1000
+  config: spancat
+  language: en
+  vectors: en_core_web_lg
 
 directories:
   - "assets"
   - "configs"
-  - "corpus/spancat"
-  - "corpus/ner"
+  - "corpus"
   - "scripts"
 
-workflows:
-  all:
-    - "process-datasets"
-    - "train-spancat"
-    - "evaluate-spancat"
-    - "train-exclusive-spancat"
-    - "evaluate-exclusive-spancat"
-    - "train-ner"
-    - "evaluate-ner"
-  spancat:
-    - "process-datasets"
-    - "train-spancat"
-    - "evaluate-spancat"
-  exclusive-spancat:
-    - "process-datasets"
-    - "train-exclusive-spancat"
-    - "evaluate-exclusive-spancat"
-  ner:
-    - "process-datasets"
-    - "train-ner"
-    - "evaluate-ner"
-
-assets:
-  # WNUT17 https://aclanthology.org/W17-4418/
-  - dest: "assets/wnut17-train.iob"
-    url: "https://github.com/leondz/emerging_entities_17/blob/master/wnut17train.conll"
-  - dest: "assets/wnut17-test.iob"
-    url: "https://github.com/leondz/emerging_entities_17/blob/master/emerging.test.annotated"
-  - dest: "assets/wnut17-dev.iob"
-    url: "https://github.com/leondz/emerging_entities_17/blob/master/emerging.dev.conll"
-  ### CoNLL-2002 (es, nl) https://aclanthology.org/W02-2024/ ###
-  - dest: "assets/conll.tgz"
-    description: "ConLL 2002 shared task data."
-    url: http://www.cnts.ua.ac.be/conll2002/ner.tgz
-  ### Archaeo dataset https://aclanthology.org/2020.lrec-1.562/ ###
-  - dest: "assets/archaeo.iob"
-    description: "Dutch Archaeological NER dataset by Alex Brandsen (LREC 2020)"
-    url: https://github.com/alexbrandsen/dutch-archaeo-NER-dataset/blob/master/complete-bio-gs.bio
-
 commands:
-  - name: "process-datasets"
-    help: "Process all necessary datasets and convert them to spaCy Doc objects."
+  - name: "download-models"
+    help: "Download spaCy models for their word-embeddings."
     script:
-      - bash scripts/unpack_conll.sh
-      - bash scripts/process_datasets.sh
+      - "python -m spacy download en_core_web_lg"
+      - "python -m spacy download es_core_news_lg"
+      - "python -m spacy download nl_core_news_lg"
+
+  - name: "train"
+    help: "Train a spancat model."
+    script:
+      - >-
+        python -m spacy train
+        configs/${vars.config}.cfg
+        --nlp.lang ${vars.language}
+        --output training/${vars.dataset}/${vars.config}/
+        --paths.train corpus/${vars.dataset}-train.spacy
+        --paths.dev corpus/${vars.dataset}-dev.spacy
+        --paths.vectors ${vars.vectors}
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu_id}
     deps:
-      - assets/conll.tgz
-      - assets/wnut17-train.iob
-      - assets/wnut17-dev.iob
-      - assets/wnut17-test.iob
-      - assets/archaeo.iob
+      - corpus/${vars.dataset}-train.spacy
+      - corpus/${vars.dataset}-dev.spacy
     outputs:
-      - corpus/ner/wnut17-train.spacy
-      - corpus/ner/wnut17-dev.spacy
-      - corpus/ner/wnut17-test.spacy
-      - corpus/spancat/wnut17-train.spacy
-      - corpus/spancat/wnut17-dev.spacy
-      - corpus/spancat/wnut17-test.spacy
-      - "corpus/ner/es-conll-train.spacy"
-      - "corpus/ner/es-conll-dev.spacy"
-      - "corpus/ner/es-conll-test.spacy"
-      - "corpus/ner/nl-conll-train.spacy"
-      - "corpus/ner/nl-conll-dev.spacy"
-      - "corpus/ner/nl-conll-test.spacy"
-      - "corpus/spancat/es-conll-train.spacy"
-      - "corpus/spancat/es-conll-dev.spacy"
-      - "corpus/spancat/es-conll-test.spacy"
-      - "corpus/spancat/nl-conll-train.spacy"
-      - "corpus/spancat/nl-conll-dev.spacy"
-      - "corpus/spancat/nl-conll-test.spacy"
-      - "corpus/ner/archaeo-train.spacy"
-      - "corpus/ner/archaeo-dev.spacy"
-      - "corpus/ner/archaeo-test.spacy"
-      - "corpus/spancat/archaeo-train.spacy"
-      - "corpus/spancat/archaeo-dev.spacy"
-      - "corpus/spancat/archaeo-test.spacy"
+      - training/${vars.dataset}/${vars.config}/model-best
+      - training/${vars.dataset}/${vars.config}/model-last
+
+  - name: "evaluate"
+    help: "Evaluate a spancat model."
+    script:
+      - mkdir -p metrics/${vars.dataset}/${vars.config}/
+      - >-
+        python -m spacy evaluate
+        training/${vars.dataset}/${vars.config}/model-best
+        corpus/${vars.dataset}-dev.spacy
+        --output metrics/${vars.dataset}/${vars.config}/dev_scores.json
+        --gpu-id ${vars.gpu_id}
+      - >-
+        python -m spacy evaluate
+        training/${vars.dataset}/${vars.config}/model-best
+        corpus/${vars.dataset}-test.spacy
+        --output metrics/${vars.dataset}/${vars.config}/test_scores.json
+        --gpu-id ${vars.gpu_id}

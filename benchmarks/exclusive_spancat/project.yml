@@ -1,0 +1,79 @@
+title: "Exclusive Spancat Benchmark"
+description: |
+  This project aims to compare the `spancat`, `ner`, and `exclusive_spancat`
+  components on different span labeling datasets. In order to access the datasets,
+  you first need to clone the [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
+  repository:
+
+  ```sh
+  # Clone the spancat-datasets repo to access the datasets
+  git clone git@github.com:explosion/spancat-datasets.git
+  ```
+
+  and run the necessary conversion scripts. For example, let's perform the
+  conversion command for the [Anatomical Entity Mention (AnEM)](http://www.nactem.ac.uk/anatomy/)
+  corpus:
+
+  ```sh
+  # While inside the spancat-datasets repository
+  spacy project run anem
+  ```
+
+  This will generate the spaCy files that you can use for training. Once done,
+  you **should copy these files to this project**. For example, you can perform
+  a directory copy in Linux via:
+
+  ```sh
+  cp -r spancat-datasets/corpus/spancat/*. exclusive_spancat_benchmark/corpus/. 
+  ```
+
+vars:
+  gpu_id: 0
+  seed: 42
+  batch_size: 1000
+  language: "en"
+
+directories:
+  - "assets"
+  - "configs"
+  - "corpus"
+  - "scripts"
+
+workflows:
+  all:
+    - "train-spancat"
+    - "evaluate-spancat"
+    - "train-exclusive-spancat"
+    - "evaluate-exclusive-spancat"
+  spancat:
+    - "train-spancat"
+    - "evaluate-spancat"
+  exclusive-spancat:
+    - "train-exclusive-spancat"
+    - "evaluate-exclusive-spancat"
+
+commands:
+  - name: "download-models"
+    help: "Download spaCy models for their word-embeddings."
+    script:
+      - "python -m spacy download en_core_web_lg"
+      - "python -m spacy download es_core_news_lg"
+      - "python -m spacy download nl_core_news_lg"
+
+  - name: "train-spancat"
+    help: "Train a spancat model for all datasets."
+
+  - name: "evaluate-spancat"
+    help: "Evaluate a spancat model for all datasets."
+
+  - name: "train-exclusive-spancat"
+    help: "Train an exclusive spancat model for all datasets."
+
+  - name: "evaluate-exclusive-spancat"
+    help: "Evaluate an exclusive spancat model for all datasets."
+
+  - name: "train-ner"
+    help: "Train a ner model for all datasets."
+
+  - name: "train-ner"
+    help: "Train a ner model for all datasets."
