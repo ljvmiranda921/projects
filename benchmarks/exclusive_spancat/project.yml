@@ -75,7 +75,7 @@ commands:
         --output training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/
         --paths.train corpus/${vars.dataset}-train.spacy
         --paths.dev corpus/${vars.dataset}-dev.spacy
-        --vars.vectors ${vars.vectors}
+        --paths.vectors ${vars.vectors}
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu_id}
     deps:
