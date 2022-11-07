@@ -1,8 +1,16 @@
 title: "Exclusive Spancat Benchmark"
 description: |
   This project aims to compare the `spancat` and `exclusive_spancat` components
-  on different span labeling datasets. In order to access the datasets, you
-  first need to clone the
+  on the following span labeling datasets:
+
+  - AnEM: a NER dataset for anatomical entity extraction. Source from PubMed database of publication abstracts and full-text publications.
+  - WNUT17: a NER benchmark based on English social media data. Includes tweets from 2010.
+
+
+
+
+
+  In order to access the datasets, you first need to clone the
   [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
   repository:
 
@@ -29,10 +37,11 @@ description: |
   ```
 
 vars:
+  dataset: ""
+  config: "spancat"
   gpu_id: 0
-  seed: 42
-  batch_size: 1000
-  language: "en"
+  lang: "en"
+  trial_num: 0
 
 directories:
   - "assets"
@@ -61,14 +70,38 @@ commands:
       - "python -m spacy download es_core_news_lg"
       - "python -m spacy download nl_core_news_lg"
 
-  - name: "train-spancat"
-    help: "Train a spancat model for all datasets."
+  - name: "train"
+    help: "Train a spancat model."
+    script:
+      - >-
+        python -m spacy train
+        configs/${vars.config}.cfg
+        --nlp.lang ${vars.lang}
+        --output training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/
+        --paths.train corpus/${vars.dataset}-train.spacy
+        --paths.dev corpus/${vars.dataset}-dev.spacy
+        --vars.vectors ${vars.vectors}
+        --system.seed ${vars.trial_num}
+        --gpu-id ${vars.gpu_id}
+    deps:
+      - corpus/${vars.dataset}-train.spacy
+      - corpus/${vars.dataset}-dev.spacy
+    outputs:
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-last/
 
-  - name: "evaluate-spancat"
-    help: "Evaluate a spancat model for all datasets."
-
-  - name: "train-exclusive-spancat"
-    help: "Train an exclusive spancat model for all datasets."
-
-  - name: "evaluate-exclusive-spancat"
-    help: "Evaluate an exclusive spancat model for all datasets."
+  - name: "evaluate"
+    help: "Evaluate a spancat model."
+    script:
+      - >-
+        python -m spacy evaluate
+        training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+        corpus/${vars.dataset}-dev.spacy
+        --output metrics/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/scores.json
+        --gpu-id ${vars.gpu_id}
+    deps:
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+      - corpus/${vars.dataset}-dev.spacy
+      - corpus/${vars.dataset}-test.spacy
+    outputs:
+      - metrics/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/scores.json
