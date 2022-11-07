@@ -37,11 +37,14 @@ description: |
   ```
 
 vars:
-  dataset: ""
   config: "spancat"
-  gpu_id: 0
-  lang: "en"
   trial_num: 0
+  seed: 0
+  gpu_id: 0
+  # Dataset configs
+  dataset: ""
+  lang: "en"
+  vectors: ""
 
 directories:
   - "assets"
@@ -50,17 +53,9 @@ directories:
   - "scripts"
 
 workflows:
-  all:
-    - "train-spancat"
-    - "evaluate-spancat"
-    - "train-exclusive-spancat"
-    - "evaluate-exclusive-spancat"
   spancat:
-    - "train-spancat"
-    - "evaluate-spancat"
-  exclusive-spancat:
-    - "train-exclusive-spancat"
-    - "evaluate-exclusive-spancat"
+    - train
+    - evaluate
 
 commands:
   - name: "download-models"
@@ -81,7 +76,7 @@ commands:
         --paths.train corpus/${vars.dataset}-train.spacy
         --paths.dev corpus/${vars.dataset}-dev.spacy
         --vars.vectors ${vars.vectors}
-        --system.seed ${vars.trial_num}
+        --system.seed ${vars.seed}
         --gpu-id ${vars.gpu_id}
     deps:
       - corpus/${vars.dataset}-train.spacy
