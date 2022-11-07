@@ -1,8 +1,9 @@
 title: "Exclusive Spancat Benchmark"
 description: |
-  This project aims to compare the `spancat`, `ner`, and `exclusive_spancat`
-  components on different span labeling datasets. In order to access the datasets,
-  you first need to clone the [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
+  This project aims to compare the `spancat` and `exclusive_spancat` components
+  on different span labeling datasets. In order to access the datasets, you
+  first need to clone the
+  [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
   repository:
 
   ```sh
@@ -71,9 +72,3 @@ commands:
 
   - name: "evaluate-exclusive-spancat"
     help: "Evaluate an exclusive spancat model for all datasets."
-
-  - name: "train-ner"
-    help: "Train a ner model for all datasets."
-
-  - name: "train-ner"
-    help: "Train a ner model for all datasets."
