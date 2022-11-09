@@ -45,7 +45,8 @@ def collate_results(
     }
     msg.text(f"Number of trials per dataset: {_format_num_trials(results)}")
     overall_results = _compute_overall(results)
-    per_entity_results = _compute_per_span(results)
+    per_span_results = _compute_per_span(results)
+    breakpoint()
 
 
 def _format_num_trials(results: Dict[str, List[Dict[str, Any]]]) -> str:
@@ -58,6 +59,7 @@ def _format_num_trials(results: Dict[str, List[Dict[str, Any]]]) -> str:
 def _compute_overall(
     results: Dict[str, List[Dict[str, Any]]]
 ) -> Dict[str, Dict[str, Tuple[float, float]]]:
+    """Compute mean and stdev for overall P/R/F results"""
     metric_names = ["spans_sc_p", "spans_sc_r", "spans_sc_f"]
     overall_results = {}
     for dataset, res in results.items():
@@ -71,8 +73,23 @@ def _compute_overall(
     return overall_results
 
 
-def _compute_per_span(results: Dict[str, List[Dict[str, Any]]]):
-    pass
+def _compute_per_span(results: Dict[str, List[Dict]]):
+    """Compute mean and stdev for per-span P/R/F results"""
+    metric_names = ["p", "r", "f"]
+    per_span_results = {}
+    for dataset, res in results.items():
+        per_span_results[dataset] = {}
+        span_labels = res[0].get("spans_sc_per_type").keys()
+        for span_label in span_labels:
+            per_span_results[dataset][span_label] = {}
+            span_prf = [r.get("spans_sc_per_type").get(span_label) for r in res]
+            for metric in metric_names:
+                scores = [r.get(metric) for r in span_prf]
+                per_span_results[dataset][span_label] = (
+                    statistics.mean(scores),
+                    statistics.stdev(scores),
+                )
+    return per_span_results
 
 
 if __name__ == "__main__":
