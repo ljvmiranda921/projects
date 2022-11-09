@@ -35,7 +35,7 @@ def collate_results(
     The datasets are set and can be found in scripts.constants. The config can either be
     `spancat` and `exclusive_spancat` (without the file format).
     """
-    msg.info(f"Reporting results for directory `{metrics_dir}`")
+    msg.info(f"Reporting results for directory `{metrics_dir}` using `{config}` config")
     results = {
         dataset: [
             srsly.read_json(f)
@@ -46,7 +46,7 @@ def collate_results(
     msg.text(f"Number of trials per dataset: {_format_num_trials(results)}")
     overall_results = _compute_overall(results)
     per_span_results = _compute_per_span(results)
-    breakpoint()
+    _report_results(overall_results, per_span_results)
 
 
 def _format_num_trials(results: Dict[str, List[Dict[str, Any]]]) -> str:
@@ -85,11 +85,48 @@ def _compute_per_span(results: Dict[str, List[Dict]]):
             span_prf = [r.get("spans_sc_per_type").get(span_label) for r in res]
             for metric in metric_names:
                 scores = [r.get(metric) for r in span_prf]
-                per_span_results[dataset][span_label] = (
+                per_span_results[dataset][span_label][metric] = (
                     statistics.mean(scores),
                     statistics.stdev(scores),
                 )
     return per_span_results
+
+
+def _report_results(overall: Dict[str, Dict], per_span: Dict[str, Dict]):
+    def _format_results(result: Tuple[float, float]) -> str:
+        mean, stdev = result
+        return "{:.2f} ({:.2f})".format(mean * 100, stdev * 100)
+
+    msg.divider("Overall results")
+    header = ("Dataset", "spans_sc_p", "spans_sc_r", "spans_sc_f")
+    aligns = ("l", "r", "r", "r")
+    table_data = []
+    for dataset, results in overall.items():
+        row = (
+            dataset,
+            _format_results(results.get("spans_sc_p")),
+            _format_results(results.get("spans_sc_r")),
+            _format_results(results.get("spans_sc_f")),
+        )
+        table_data.append(row)
+
+    msg.table(table_data, header=header, divider=True, aligns=aligns)
+
+    msg.divider("Per-span results")
+    header = ("Span Label", "precision", "recall", "f1-score")
+    for dataset, span_results in per_span.items():
+        msg.divider(dataset, char="-")
+        table_data = []
+        for span_label, results in span_results.items():
+            row = (
+                span_label,
+                _format_results(results.get("p")),
+                _format_results(results.get("r")),
+                _format_results(results.get("f")),
+            )
+            table_data.append(row)
+
+        msg.table(table_data, header=header, divider=True, aligns=aligns)
 
 
 if __name__ == "__main__":
