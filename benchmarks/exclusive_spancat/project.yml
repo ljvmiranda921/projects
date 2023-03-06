@@ -1,0 +1,103 @@
+title: "Exclusive Spancat Benchmark"
+description: |
+  This project aims to compare the `spancat` and `exclusive_spancat` components
+  on the following span labeling datasets:
+
+  - AnEM: a NER dataset for anatomical entity extraction. Source from PubMed database of publication abstracts and full-text publications.
+  - WNUT17: a NER benchmark based on English social media data. Includes tweets from 2010.
+
+
+
+
+
+  In order to access the datasets, you first need to clone the
+  [`spancat-datasets`](https://github.com/explosion/spancat-datasets)
+  repository:
+
+  ```sh
+  # Clone the spancat-datasets repo to access the datasets
+  git clone git@github.com:explosion/spancat-datasets.git
+  ```
+
+  and run the necessary conversion scripts. For example, let's perform the
+  conversion command for the [Anatomical Entity Mention (AnEM)](http://www.nactem.ac.uk/anatomy/)
+  corpus:
+
+  ```sh
+  # While inside the spancat-datasets repository
+  spacy project run anem
+  ```
+
+  This will generate the spaCy files that you can use for training. Once done,
+  you **should copy these files to this project**. For example, you can perform
+  a directory copy in Linux via:
+
+  ```sh
+  cp -r spancat-datasets/corpus/spancat/*. exclusive_spancat_benchmark/corpus/. 
+  ```
+
+vars:
+  config: "spancat"
+  trial_num: 0
+  seed: 0
+  gpu_id: 0
+  # Dataset configs
+  dataset: ""
+  lang: "en"
+  vectors: ""
+
+directories:
+  - "assets"
+  - "configs"
+  - "corpus"
+  - "scripts"
+
+workflows:
+  spancat:
+    - train
+    - evaluate
+
+commands:
+  - name: "download-models"
+    help: "Download spaCy models for their word-embeddings."
+    script:
+      - "python -m spacy download en_core_web_lg"
+      - "python -m spacy download es_core_news_lg"
+      - "python -m spacy download nl_core_news_lg"
+
+  - name: "train"
+    help: "Train a spancat model."
+    script:
+      - >-
+        python -m spacy train
+        configs/${vars.config}.cfg
+        --nlp.lang ${vars.lang}
+        --output training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/
+        --paths.train corpus/${vars.dataset}-train.spacy
+        --paths.dev corpus/${vars.dataset}-dev.spacy
+        --paths.vectors ${vars.vectors}
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu_id}
+    deps:
+      - corpus/${vars.dataset}-train.spacy
+      - corpus/${vars.dataset}-dev.spacy
+    outputs:
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-last/
+
+  - name: "evaluate"
+    help: "Evaluate a spancat model."
+    script:
+      - mkdir -p metrics/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/
+      - >-
+        python -m spacy evaluate
+        training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+        corpus/${vars.dataset}-dev.spacy
+        --output metrics/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/scores.json
+        --gpu-id ${vars.gpu_id}
+    deps:
+      - training/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/model-best/
+      - corpus/${vars.dataset}-dev.spacy
+      - corpus/${vars.dataset}-test.spacy
+    outputs:
+      - metrics/${vars.dataset}/${vars.config}/trial-${vars.trial_num}/scores.json
