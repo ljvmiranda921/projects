@@ -79,7 +79,7 @@ def get_model_data(
     Returns a dictionary with text, spans, and annotator ID.
     """
     # load trained model
-    ner = spacy.load(trained_model)
+    nlp = spacy.load(trained_model)
 
     data = copy.deepcopy(text_data)
     for line in data:
@@ -105,7 +105,7 @@ def get_ruler_data(text_data=Arg(..., help="Dictionary of texts in the dataset."
 
     Returns a dictionary with text, spans, and annotator ID.
     """
-    nlp = spacy.blank("en")  # blank tokenizer
+    nlp = spacy.blank("en") 
 
     # add span ruler pattern pipe on blank tokenizer
     patterns = restaurant_span_rules()
@@ -130,8 +130,8 @@ def get_ruler_data(text_data=Arg(..., help="Dictionary of texts in the dataset."
 
 
 def preprocess_prodigy(
-    file_in: Path = Arg(..., help="Input path for the raw IOB files."),
-    file_out: Path = Arg(..., help="Output path for the processed jsonl files."),
+    input_file: Path = Arg(..., help="Input path for the raw IOB files."),
+    output_file: Path = Arg(..., help="Output path for the processed jsonl files."),
     trained_model: Path = Arg(..., help="The trained NER model."),
     include_ruler: bool = Opt(
         False, help="Whether to include the ruler in the outputted annotations."

@@ -262,7 +262,7 @@ commands:
       - "prodigy db-out test_review assets/"
 
   - name: "prodigy_convert"
-    help: "Covert Prodigy files into spaCy's binary format for model training."
+    help: "Convert Prodigy files into spaCy's binary format for model training."
     script:
       - "prodigy data-to-spacy corpus/review/ --config configs/ner.cfg --ner test_review --eval-split 0.0"
       - "mv corpus/review/train.spacy corpus/review/test.spacy"
