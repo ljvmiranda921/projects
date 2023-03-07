@@ -115,12 +115,12 @@ workflows:
     - assemble
     - evaluate
   prodigy:
-    - preprocess_prodigy
-    - db_in
+    - preprocess-prodigy
+    - db-in
   review:
-    - train_review
-    - assemble_review
-    - evaluate_review
+    - train-review
+    - assemble-review
+    - evaluate-review
 
 # Project commands, specified in a style similar to CI config files (e.g. Azure
 # pipelines). The name is the command name that lets you trigger the command
@@ -208,7 +208,7 @@ commands:
       - metrics/baseline.json
       - metric/combined.json
 
-  - name: "preprocess_prodigy"
+  - name: "preprocess-prodigy"
     help: "Preprocess raw IOB data into JSONL format for Prodigy review recipe."
     script:
       - "python -m scripts.preprocess_prodigy assets/train_raw.iob assets/mult_annotator_train.jsonl training/ner/model-best"
@@ -220,7 +220,7 @@ commands:
       - "assets/mult_annotator_train.jsonl"
       - "assets/mult_annotator_test.jsonl"
 
-  - name: "db_in"
+  - name: "db-in"
     help: "Add datasets to Prodigy database."
     script:
       - "prodigy db-in mult_annotator_train assets/mult_annotator_train.jsonl --answer accept"
@@ -229,7 +229,7 @@ commands:
       - "assets/mult_annotator_train.jsonl"
       - "assets/mult_annotator_test.jsonl"
 
-  - name: "prodigy_review_train"
+  - name: "prodigy-review-train"
     help: "Annotate the train data with the Prodigy review recipe."
     script:
       - >-
@@ -242,7 +242,7 @@ commands:
     deps:
       - "assets/mult_annotator_train.jsonl"
 
-  - name: "prodigy_review_test"
+  - name: "prodigy-review-test"
     help: "Annotate the test data with the Prodigy review recipe."
     script:
       - >- 
@@ -255,20 +255,20 @@ commands:
     deps:
       - "assets/mult_annotator_test.jsonl"
 
-  - name: "db_out"
+  - name: "db-out"
     help: "Export Prodigy data."
     script:
       - "prodigy db-out train_review assets/"
       - "prodigy db-out test_review assets/"
 
-  - name: "prodigy_convert"
+  - name: "prodigy-convert"
     help: "Convert Prodigy files into spaCy's binary format for model training."
     script:
       - "prodigy data-to-spacy corpus/review/ --config configs/ner.cfg --ner test_review --eval-split 0.0"
       - "mv corpus/review/train.spacy corpus/review/test.spacy"
       - "prodigy data-to-spacy corpus/review/ --config configs/ner.cfg --ner train_review --eval-split 0.2"
       
-  - name: "train_review"
+  - name: "train-review"
     help: "Train a NER model with reviewed data."
     script:
       - >-
@@ -285,7 +285,7 @@ commands:
       - training/ner_review/model-best
       - training/ner_review/model-last
 
-  - name: "assemble_review"
+  - name: "assemble-review"
     help: "Assemble trained NER pipeline with SpanRuler with reviewed data."
     script:
       - >-
@@ -300,7 +300,7 @@ commands:
     outputs:
       - models/review/ner_ruler
 
-  - name: "evaluate_review"
+  - name: "evaluate-review"
     help: "Evaluate each model with reviewed data."
     script:
       - >-
