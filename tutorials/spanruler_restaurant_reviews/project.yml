@@ -87,7 +87,7 @@ vars:
 # These are the directories that the project needs. The project CLI will make
 # sure that they always exist.
 directories:
-  ["assets", "corpus", "configs", "metrics", "models", "scripts", "training"]
+  ["assets", "corpus/review", "configs", "metrics", "models", "scripts", "training"]
 
 # Assets that should be downloaded or available in the directory. We're shipping
 # the reviewed annotated datasets with the project, so they won't have to be 
@@ -118,6 +118,7 @@ workflows:
     - preprocess-prodigy
     - db-in
   review:
+    - prodigy-convert
     - train-review
     - assemble-review
     - evaluate-review
@@ -211,11 +212,11 @@ commands:
   - name: "preprocess-prodigy"
     help: "Preprocess raw IOB data into JSONL format for Prodigy review recipe."
     script:
-      - "python -m scripts.preprocess_prodigy assets/train_raw.iob assets/mult_annotator_train.jsonl training/ner/model-best"
-      - "python -m scripts.preprocess_prodigy assets/test_raw.iob assets/mult_annotator_test.jsonl training/ner/model-best"
+      - "python -m scripts.preprocess_prodigy corpus/train_dev.spacy assets/mult_annotator_train.jsonl training/ner/model-best"
+      - "python -m scripts.preprocess_prodigy corpus/test.spacy assets/mult_annotator_test.jsonl training/ner/model-best"
     deps:
-      - assets/train_raw.iob
-      - assets/test_raw.iob
+      - corpus/test.spacy
+      - corpus/train_dev.spacy
     outputs:
       - "assets/mult_annotator_train.jsonl"
       - "assets/mult_annotator_test.jsonl"
@@ -262,11 +263,20 @@ commands:
       - "prodigy db-out test_review assets/"
 
   - name: "prodigy-convert"
-    help: "Convert Prodigy files into spaCy's binary format for model training."
+    help: "Convert JSONL files into spaCy's binary format for model training."
     script:
-      - "prodigy data-to-spacy corpus/review/ --config configs/ner.cfg --ner test_review --eval-split 0.0"
-      - "mv corpus/review/train.spacy corpus/review/test.spacy"
-      - "prodigy data-to-spacy corpus/review/ --config configs/ner.cfg --ner train_review --eval-split 0.2"
+      - "python -m scripts.convert assets/train_review.jsonl corpus/review/train.spacy"
+      - "python -m scripts.convert assets/test_review.jsonl corpus/review/test.spacy"
+      - "mv corpus/review/train.spacy corpus/review/train_dev.spacy"
+      # Split corpus into train, dev, and test
+      - "python -m scripts.split corpus/review/train_dev.spacy corpus/review/ --train-size 0.8 --seed ${vars.seed}"
+    deps:
+      - "assets/train_review.jsonl"
+      - "assets/test_review.jsonl"
+    outputs:
+      - "corpus/review/train.spacy"
+      - "corpus/review/dev.spacy"
+      - "corpus/review/test.spacy"
       
   - name: "train-review"
     help: "Train a NER model with reviewed data."
@@ -290,15 +300,15 @@ commands:
     script:
       - >-
         python -m spacy assemble
-        configs/ner_ruler_review.cfg
-        models/review/ner_ruler
+        configs/ner_ruler.cfg
+        models/ner_ruler_review
         --components.tok2vec.source training/ner_review/model-best/
         --components.ner.source training/ner_review/model-best/
         --code scripts/rules_review.py
     deps:
       - training/ner_review/model-best
     outputs:
-      - models/review/ner_ruler
+      - models/ner_ruler_review
 
   - name: "evaluate-review"
     help: "Evaluate each model with reviewed data."
@@ -312,13 +322,13 @@ commands:
 
       - >-
         python -m spacy evaluate
-        models/review/ner_ruler/
+        models/ner_ruler_review/
         corpus/review/test.spacy
         --gpu-id ${vars.gpu_id}
         --output metrics/combined_review.json
     deps:
       - training/ner_review/model-best/
-      - models/review/ner_ruler
+      - models/ner_ruler_review/
       - corpus/review/test.spacy
     outputs:
       - metrics/baseline_review.json
