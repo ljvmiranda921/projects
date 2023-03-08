@@ -98,15 +98,15 @@ Commands are only re-run if their inputs have changed.
 | `train` | Train a baseline NER model. |
 | `assemble` | Assemble trained NER pipeline with SpanRuler. |
 | `evaluate` | Evaluate each model. |
-| `preprocess_prodigy` | Preprocess raw IOB data into JSONL format for Prodigy review recipe. |
-| `db_in` | Add datasets to Prodigy database. |
-| `prodigy_review_train` | Annotate the train data with the Prodigy review recipe. |
-| `prodigy_review_test` | Annotate the test data with the Prodigy review recipe. |
-| `db_out` | Export Prodigy data. |
-| `prodigy_convert` | Covert Prodigy files into spaCy's binary format for model training. |
-| `train_review` | Train a NER model with reviewed data. |
-| `assemble_review` | Assemble trained NER pipeline with SpanRuler with reviewed data. |
-| `evaluate_review` | Evaluate each model with reviewed data. |
+| `preprocess-prodigy` | Preprocess raw IOB data into JSONL format for Prodigy review recipe. |
+| `db-in` | Add datasets to Prodigy database. |
+| `prodigy-review-train` | Annotate the train data with the Prodigy review recipe. |
+| `prodigy-review-test` | Annotate the test data with the Prodigy review recipe. |
+| `db-out` | Export Prodigy data. |
+| `prodigy-convert` | Convert Prodigy files into spaCy's binary format for model training. |
+| `train-review` | Train a NER model with reviewed data. |
+| `assemble-review` | Assemble trained NER pipeline with SpanRuler with reviewed data. |
+| `evaluate-review` | Evaluate each model with reviewed data. |
 
 ### ⏭ Workflows
 
@@ -118,8 +118,8 @@ inputs have changed.
 | Workflow | Steps |
 | --- | --- |
 | `all` | `download` &rarr; `preprocess` &rarr; `train` &rarr; `assemble` &rarr; `evaluate` |
-| `prodigy` | `preprocess_prodigy` &rarr; `db_in` |
-| `review` | `train_review` &rarr; `assemble_review` &rarr; `evaluate_review` |
+| `prodigy` | `preprocess-prodigy` &rarr; `db-in` |
+| `review` | `prodigy-convert` &rarr; `train-review` &rarr; `assemble-review` &rarr; `evaluate-review` |
 
 ### 🗂 Assets
 
