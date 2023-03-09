@@ -30,8 +30,8 @@ def get_text_annotations(
     doc_bin = DocBin().from_disk(input_file)
     docs = list(doc_bin.get_docs(nlp.vocab))
 
-    org_annotations = []  # data with annotations
-    texts = []  # data without annotations
+    org_annotations = []
+    texts = []
 
     for doc in docs:
         text = doc.text
